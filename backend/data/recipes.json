@@ -1,0 +1,22 @@
+{
+  "weekly": [
+    {
+      "menu": "Chicken Salad",
+      "ingredients": ["chicken", "lettuce", "tomato"]
+    },
+    {
+      "menu": "Pasta",
+      "ingredients": ["pasta", "tomato_sauce", "cheese"]
+    },
+    {
+      "menu": "Soup",
+      "ingredients": ["onion", "potato", "carrot"]
+    }
+  ],
+  "diet": [
+    {
+      "menu": "Grilled Chicken",
+      "ingredients": ["chicken", "broccoli"]
+    }
+  ]
+}
