@@ -17,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+master_agent = MasterAgent()
 context_agent = ContextAgent()
 menu_agent = MenuPlannerAgent()
 inventory_agent = InventoryFilterAgent()
