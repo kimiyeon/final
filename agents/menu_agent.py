@@ -2,7 +2,7 @@ import json
 
 class MenuPlannerAgent:
     def plan(self, context):
-        with open("backend/data/recipes.json", "r") as f:
+        with open("data/recipes.json", "r") as f:
             recipes = json.load(f)
 
         purpose = context["purpose"]

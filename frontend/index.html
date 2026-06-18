@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Grocery Agent</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Grocery AI Agent</h1>
+
+        <label>Family Members (comma separated)</label>
+        <input id="family" placeholder="adult, child">
+
+        <label>Allergies (comma separated)</label>
+        <input id="allergies" placeholder="peanut">
+
+        <label>Purpose</label>
+        <select id="purpose">
+            <option value="weekly">Weekly Shopping</option>
+            <option value="diet">Diet Plan</option>
+        </select>
+
+        <label>Budget</label>
+        <input id="budget" type="number" value="100000">
+
+        <button onclick="generate()">Generate Shopping List</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import json
 
 class PriceOptimizerAgent:
     def optimize(self, shopping_items):
-        with open("backend/data/prices.json", "r") as f:
+        with open("data/prices.json", "r") as f:
             prices = json.load(f)
 
         cart = []
