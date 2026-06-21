@@ -1,0 +1,26 @@
+class ReceiptExtension:
+    def __init__(self):
+        pass
+
+    def analyze_receipt(self, receipt_text):
+        known_items = [
+            "egg",
+            "milk",
+            "chicken",
+            "tomato",
+            "cheese",
+            "lettuce",
+            "pasta"
+        ]
+
+        found_items = []
+
+        receipt_lower = receipt_text.lower()
+
+        for item in known_items:
+            if item in receipt_lower:
+                found_items.append(item)
+
+        return {
+            "detected_items": found_items
+        }

@@ -1,418 +1,255 @@
-# Project Report — Smart Grocery AI Agent
+# Smart Grocery Agent (스마트 장보기 에이전트)
 
-## 1. Selected Scenario
-
-Scenario Category: Shopping / Commerce
-Project Topic: Automatic Shopping List Generation Agent
-
-This project focuses on building an AI agent system that automatically generates personalized grocery shopping lists based on user context such as recipes, family composition, allergies, and budget constraints.
+Pi 기반 멀티 에이전트 구조를 활용한 AI 장보기 도우미 서비스입니다.
 
 ---
 
-## 2. Problem Definition
+# 1. 프로젝트 소개
 
-Modern households often face several grocery-related inefficiencies:
+Smart Grocery Agent는 사용자의 장보기 상황을 분석하여 자동으로 장보기 목록을 생성해주는 AI Agent 웹 서비스입니다.
 
-* Purchasing duplicate ingredients already available at home
-* Difficulty planning meals for the week
-* Ignoring allergies or dietary restrictions
-* Exceeding grocery budgets
-* Spending time manually comparing grocery items
+다음 정보를 기반으로 개인화된 장보기 리스트를 생성합니다.
 
-These problems become more difficult for families with children, pets, or special dietary requirements.
+- 가족 구성
+- 알레르기 및 기저 질환
+- 장보기 목적
+- 예산
+- 냉장고 재고
+- 기존 영수증 구매 내역
 
-The goal of this project is to automate grocery planning using an AI agent architecture.
-
----
-
-## 3. Target Users
-
-The service targets users who regularly manage grocery shopping.
-
-Primary users include:
-
-* Busy working families
-* Parents with children
-* Health-conscious users
-* Diet-focused individuals
-* Budget-sensitive shoppers
-
-Example user:
-A family of three (two adults and one child) planning weekly groceries with allergy restrictions and budget constraints.
+AI 에이전트들이 역할을 분담하여 상황 분석, 식단 생성, 중복 제거, 가격 비교를 수행합니다.
 
 ---
 
-## 4. Core Features
+# 2. 문제 정의
 
-### 4.1 Context Analysis
+기존 장보기에는 다음과 같은 문제가 있습니다.
 
-The system collects and analyzes user input:
+- 냉장고에 이미 있는 재료를 다시 구매함
+- 가족의 건강 조건이 반영되지 않음
+- 예산 초과
+- 행사/목적에 맞는 식단 구성의 어려움
 
-* Family composition
-* Allergies
-* Shopping purpose
-* Budget
-
-Example:
-
-* Family: adult, child
-* Allergy: peanut
-* Purpose: weekly shopping
-* Budget: ₩100,000
+본 프로젝트는 이러한 문제를 AI Agent와 외부 도구(MCP)를 활용해 해결합니다.
 
 ---
 
-### 4.2 Meal Planning
+# 3. 서비스 대상 사용자
 
-The AI generates a personalized meal plan.
+다음과 같은 사용자를 대상으로 합니다.
 
-Example meals:
-
-* Chicken Salad
-* Pasta
-* Soup
-
-Meal planning considers:
-
-* User goals
-* Allergies
-* Diet restrictions
+- 주간 장보기를 하는 가정
+- 아이 식단을 관리하는 부모
+- 알레르기가 있는 가족
+- 예산 관리가 필요한 사용자
+- 캠핑 / 여행 / 파티 준비 사용자
 
 ---
 
-### 4.3 Inventory Filtering
+# 4. 핵심 기능
 
-The system checks existing fridge inventory.
+## 4.1 Context Analysis
 
-Example:
-Fridge contains:
+사용자 입력에서 다음 정보를 추출합니다.
 
-* Milk
-* Egg
-* Onion
-
-If ingredients already exist, they are removed from the shopping list.
-
-This reduces duplicate purchases.
+- 가족 수
+- 알레르기
+- 쇼핑 목적
+- 예산
 
 ---
 
-### 4.4 Price Optimization
+## 4.2 Menu Planning
 
-The system compares item prices from a pricing database.
+사용자 상황에 맞는 식단을 생성합니다.
 
-It calculates:
+예시:
 
-* Individual item prices
-* Total cost
-* Budget compliance
-
-This helps users minimize grocery spending.
+- Chicken Salad
+- Pasta
+- Soup
 
 ---
 
-## 5. System Architecture
+## 4.3 Inventory Filtering
 
-The service follows a multi-agent AI architecture.
+냉장고 재고 MCP 서버와 연동하여 이미 보유한 재료를 제거합니다.
 
-Architecture:
+예시:
 
+냉장고 보유 재료:
+
+- egg
+- milk
+- tomato
+
+→ 장보기 목록에서 제외
+
+---
+
+## 4.4 Price Optimization
+
+마트별 가격을 비교하여 최적 가격을 선택합니다.
+
+비교 대상:
+
+- Coupang
+- Emart
+- Homeplus
+
+---
+
+## 4.5 Receipt Analysis Extension
+
+기존 영수증을 분석하여 최근 구매 품목을 파악합니다.
+
+중복 구매 방지에 활용됩니다.
+
+---
+
+# 5. 시스템 구조
+
+```text
 Web UI
-↓
-Master Agent
-├── Context Analyzer Agent
-├── Menu Planner Agent
-├── Inventory Filter Agent
-└── Price Optimizer Agent
-↓
-MCP Tools
-↓
-Data Sources
+   ↓
+FastAPI Backend
+   ↓
+Pi Runtime (Multi-Agent Architecture)
+   ├── Context Analyzer Agent
+   ├── Menu Planner Agent
+   ├── Inventory Filter Agent
+   └── Price Optimizer Agent
+          ↓
+      MCP Servers
+      ├── fridge-inventory-mcp
+      └── price-comparison-mcp
+
+Extensions
+└── receipt-ocr-extension# Smart Grocery Agent (스마트 장보기 에이전트)
+
+Pi 기반 멀티 에이전트 구조를 활용한 AI 장보기 도우미 서비스입니다.
 
 ---
 
-### 5.1 Master Agent
+# 1. 프로젝트 소개
 
-The Master Agent orchestrates the workflow.
+Smart Grocery Agent는 사용자의 장보기 상황을 분석하여 자동으로 장보기 목록을 생성해주는 AI Agent 웹 서비스입니다.
 
-Responsibilities:
+다음 정보를 기반으로 개인화된 장보기 리스트를 생성합니다.
 
-* Receive user input
-* Trigger sub-agents
-* Collect outputs
-* Generate final result
+- 가족 구성
+- 알레르기 및 기저 질환
+- 장보기 목적
+- 예산
+- 냉장고 재고
+- 기존 영수증 구매 내역
 
----
-
-### 5.2 Context Analyzer Agent
-
-Responsibilities:
-
-* Parse user intent
-* Extract family information
-* Detect allergies
-* Parse budget
-
-Input:
-Raw user form data
-
-Output:
-Structured context JSON
+AI 에이전트들이 역할을 분담하여 상황 분석, 식단 생성, 중복 제거, 가격 비교를 수행합니다.
 
 ---
 
-### 5.3 Menu Planner Agent
+# 2. 문제 정의
 
-Responsibilities:
+기존 장보기에는 다음과 같은 문제가 있습니다.
 
-* Generate meal plan
-* Determine required ingredients
+- 냉장고에 이미 있는 재료를 다시 구매함
+- 가족의 건강 조건이 반영되지 않음
+- 예산 초과
+- 행사/목적에 맞는 식단 구성의 어려움
 
-Input:
-Context information
-
-Output:
-Meal plan + ingredient list
+본 프로젝트는 이러한 문제를 AI Agent와 외부 도구(MCP)를 활용해 해결합니다.
 
 ---
 
-### 5.4 Inventory Filter Agent
+# 3. 서비스 대상 사용자
 
-Responsibilities:
+다음과 같은 사용자를 대상으로 합니다.
 
-* Compare ingredients with fridge inventory
-* Remove duplicates
-
-Input:
-Ingredient list
-
-Output:
-Filtered shopping list
+- 주간 장보기를 하는 가정
+- 아이 식단을 관리하는 부모
+- 알레르기가 있는 가족
+- 예산 관리가 필요한 사용자
+- 캠핑 / 여행 / 파티 준비 사용자
 
 ---
 
-### 5.5 Price Optimizer Agent
+# 4. 핵심 기능
 
-Responsibilities:
+## 4.1 Context Analysis
 
-* Retrieve product prices
-* Calculate total cost
-* Optimize budget
+사용자 입력에서 다음 정보를 추출합니다.
 
-Input:
-Shopping list
-
-Output:
-Final priced cart
+- 가족 수
+- 알레르기
+- 쇼핑 목적
+- 예산
 
 ---
 
-## 6. Skill Usage
+## 4.2 Menu Planning
 
-Skills are reusable instruction modules that guide agent behavior.
+사용자 상황에 맞는 식단을 생성합니다.
 
-Implemented skills:
+예시:
 
-### Parse Intent Skill
-
-Used by Context Analyzer Agent.
-
-Purpose:
-
-* Parse user intent
-* Extract shopping requirements
+- Chicken Salad
+- Pasta
+- Soup
 
 ---
 
-### Diet Timeline Skill
+## 4.3 Inventory Filtering
 
-Used by Menu Planner Agent.
+냉장고 재고 MCP 서버와 연동하여 이미 보유한 재료를 제거합니다.
 
-Purpose:
+예시:
 
-* Generate meal schedules
-* Respect health restrictions
+냉장고 보유 재료:
 
----
+- egg
+- milk
+- tomato
 
-### Fridge Dedup Skill
-
-Used by Inventory Filter Agent.
-
-Purpose:
-
-* Remove duplicate ingredients
+→ 장보기 목록에서 제외
 
 ---
 
-### Route Indexing Skill
+## 4.4 Price Optimization
 
-Used by Price Optimizer Agent.
+마트별 가격을 비교하여 최적 가격을 선택합니다.
 
-Purpose:
+비교 대상:
 
-* Minimize shopping cost
-
----
-
-## 7. MCP Usage
-
-MCP tools connect agents to external tools and databases.
-
-Implemented MCP tools:
-
-### fridge-inventory-mcp
-
-Simulates smart fridge inventory database.
-
-Stores:
-
-* Remaining ingredients
-* Available inventory
+- Coupang
+- Emart
+- Homeplus
 
 ---
 
-### recipe-ingredient-mcp
+## 4.5 Receipt Analysis Extension
 
-Recipe database containing:
+기존 영수증을 분석하여 최근 구매 품목을 파악합니다.
 
-* Meal templates
-* Ingredient mappings
-
----
-
-### price-mcp
-
-Pricing database containing:
-
-* Product prices
-* Shopping cost data
-
-These MCP modules simulate real-world APIs.
+중복 구매 방지에 활용됩니다.
 
 ---
 
-## 8. Pi Extension Usage
+# 5. 시스템 구조
 
-Extensions are modular components used to expand system functionality.
+```text
+Web UI
+   ↓
+FastAPI Backend
+   ↓
+Pi Runtime (Multi-Agent Architecture)
+   ├── Context Analyzer Agent
+   ├── Menu Planner Agent
+   ├── Inventory Filter Agent
+   └── Price Optimizer Agent
+          ↓
+      MCP Servers
+      ├── fridge-inventory-mcp
+      └── price-comparison-mcp
 
-Implemented extensions:
-
-### receipt-ocr-extension
-
-Simulates OCR-based receipt analysis.
-
-Future capability:
-
-* Parse past grocery receipts
-* Predict frequently purchased items
-
----
-
-### grocery-extension
-
-Provides store recommendation.
-
-Future capability:
-
-* Recommend cheapest grocery store
-* Support route optimization
-
----
-
-## 9. Web UI
-
-A simple web interface was implemented.
-
-Input components:
-
-* Family members
-* Allergies
-* Shopping purpose
-* Budget
-
-Output components:
-
-* Meal plan
-* Shopping list
-* Total cost
-
-The UI allows users to interact with the AI agent system directly.
-
----
-
-## 10. Implementation Results
-
-Example input:
-
-* Family: adult, child
-* Allergy: peanut
-* Purpose: weekly
-* Budget: ₩100,000
-
-Example output:
-
-Meal Plan:
-
-* Chicken Salad
-* Pasta
-* Soup
-
-Shopping List:
-
-* chicken
-* lettuce
-* tomato
-* pasta
-* tomato_sauce
-* cheese
-* potato
-* carrot
-
-Total Cost:
-₩35,500
-
-The system successfully generated personalized grocery recommendations.
-
----
-
-## 11. Limitations
-
-Current prototype has several limitations:
-
-* Uses mock databases instead of real APIs
-* No real retailer integration
-* No production OCR pipeline
-* No IoT smart fridge connection
-* Pi SDK not fully integrated
-
----
-
-## 12. Future Improvements
-
-Potential improvements include:
-
-* Real Pi SDK integration
-* Real grocery retailer APIs
-* OCR-based receipt parsing
-* Smart fridge IoT integration
-* LLM-powered advanced meal recommendation
-* Personalized long-term grocery prediction
-
----
-
-## 13. Conclusion
-
-Smart Grocery AI Agent demonstrates how multi-agent AI systems can improve grocery planning.
-
-By combining:
-
-* Pi-style agent architecture
-* Skills
-* MCP tools
-* Extensions
-* Web UI
-
-the system successfully provides personalized and budget-aware grocery recommendations.
-
-This project demonstrates the practical potential of AI agents in everyday shopping scenarios.
+Extensions
+└── receipt-ocr-extension
