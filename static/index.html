@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Grocery Agent</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f7fb;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 20px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    #result {
+      margin-top: 30px;
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🛒 Smart Grocery Agent</h1>
+  <p>AI 기반 장보기 자동 생성 서비스</p>
+
+  <label>Family Size</label>
+  <input id="family" type="number" value="4">
+
+  <label>Allergies</label>
+  <input id="allergies" type="text" placeholder="peanut">
+
+  <label>Purpose</label>
+  <select id="purpose">
+    <option value="weekly">Weekly</option>
+    <option value="diet">Diet</option>
+  </select>
+
+  <label>Budget</label>
+  <input id="budget" type="number" value="50000">
+
+  <button onclick="generate()">Generate Shopping List</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+async function generate() {
+  const payload = {
+    family: ["member1","member2"],
+    allergies: [document.getElementById("allergies").value],
+    purpose: document.getElementById("purpose").value,
+    budget: parseInt(document.getElementById("budget").value)
+  };
+
+  const response = await fetch("/generate-shopping-list", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  let html = "<h2>Meal Plan</h2><ul>";
+  data.meal_plan.forEach(meal => {
+    html += `<li>${meal}</li>`;
+  });
+
+  html += "</ul><h2>Shopping List</h2><ul>";
+
+  data.shopping_list.forEach(item => {
+    html += `<li>${item.name}: ₩${item.price}</li>`;
+  });
+
+  html += `</ul><h3>Total Cost: ₩${data.total_cost}</h3>`;
+
+  document.getElementById("result").innerHTML = html;
+}
+</script>
+</body>
+</html>

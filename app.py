@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from agents.master_agent import MasterAgent
 from agents.context_agent import ContextAgent
 from agents.menu_agent import MenuPlannerAgent
@@ -8,6 +10,12 @@ from agents.inventory_agent import InventoryFilterAgent
 from agents.price_agent import PriceOptimizerAgent
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def home():
+    return FileResponse("static/index.html")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,15 +33,11 @@ price_agent = PriceOptimizerAgent()
 
 
 class UserInput(BaseModel):
-    family: list
+    family_size: int
     allergies: list
     purpose: str
     budget: int
 
-
-@app.get("/")
-def home():
-    return {"message": "Smart Grocery Agent Running"}
 
 
 @app.post("/generate-shopping-list")
