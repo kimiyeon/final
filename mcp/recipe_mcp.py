@@ -25,7 +25,7 @@ def get_recipes(purpose="weekly"):
 
         results = []
 
-        for meal in meals[:6]:
+        for meal in meals[:20]:
             detail = get_meal_detail(meal["idMeal"])
             if detail:
                 results.append(detail)

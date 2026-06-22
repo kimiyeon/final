@@ -95,6 +95,17 @@ class MenuPlannerAgent:
 
             classification = classify_menu(menu_name, ingredients, purpose)
 
+            print(
+                "[MENU FILTER]",
+                menu_name,
+                "accepted=",
+                classification.get("accepted"),
+                "score=",
+                classification.get("score"),
+                "reasons=",
+                classification.get("reasons")
+            )
+
             if not classification.get("accepted", False):
                 continue
 
@@ -119,9 +130,10 @@ class MenuPlannerAgent:
                 "is_dessert": classification.get("is_dessert", False),
             })
 
-        # 필터가 너무 강해서 아무 메뉴도 없을 경우:
-        # menu-filter-mcp 조건은 무시하고 알레르기만 피해서 fallback 추천
+        # 필터가 너무 강해서 아무 메뉴도 없을 경우 fallback
         if not safe_recipes:
+            print("[MENU FILTER] No accepted menu. Fallback mode started.")
+
             fallback_recipes = []
 
             for meal in recipes:
@@ -134,6 +146,29 @@ class MenuPlannerAgent:
                 }
 
                 if normalized_ingredients & blocked:
+                    continue
+
+                # fallback에서도 너무 이상한 메뉴는 막음
+                menu_text = self.normalize_item(menu_name + " " + " ".join(ingredients))
+
+                hard_block_words = [
+                    "algerian",
+                    "arepa",
+                    "ayam",
+                    "percik",
+                    "morcilla",
+                    "chorizo",
+                    "naan",
+                    "pico",
+                    "plantain",
+                    "rocket",
+                    "offal",
+                    "kidney",
+                    "liver"
+                ]
+
+                if any(word in menu_text for word in hard_block_words):
+                    print("[FALLBACK BLOCKED]", menu_name)
                     continue
 
                 fallback_recipes.append({
@@ -188,7 +223,62 @@ class MenuPlannerAgent:
                 if len(selected) >= meal_limit:
                     break
 
+
+
+            menu_text = self.normalize_item(menu_name + " " + " ".join(ingredients))
+
+            hard_block_words = [
+            "algerian", "arepa", "ayam", "percik", "morcilla",
+            "chorizo", "naan", "pico", "plantain", "rocket",
+            "offal", "kidney", "liver"
+            ]
+        if len(selected) < meal_limit:
+            used_menus = {meal["menu"] for meal in selected}
+
+            for meal in recipes:
+                menu_name = meal.get("menu", "")
+                ingredients = meal.get("ingredients", [])
+
+                if menu_name in used_menus:
+                    continue
+
+                menu_text = self.normalize_item(
+                    menu_name + " " + " ".join(ingredients)
+                )
+
+                hard_block_words = [
+                    "algerian", "arepa", "ayam", "percik", "morcilla",
+                    "chorizo", "naan", "pico", "plantain", "rocket",
+                    "offal", "kidney", "liver"
+                ]
+
+                if any(word in menu_text for word in hard_block_words):
+                    continue
+
+                normalized_ingredients = {
+                    self.normalize_item(item)
+                    for item in ingredients
+                }
+
+                if normalized_ingredients & blocked:
+                    continue
+
+                selected.append({
+                    "menu": menu_name,
+                    "ingredients": ingredients,
+                    "score": self.score_meal(menu_name, ingredients, purpose),
+                    "is_dessert": False,
+                })
+
+                used_menus.add(menu_name)
+
+                if len(selected) >= meal_limit:
+                    break
+
         selected.sort(key=lambda x: x["score"], reverse=True)
+
+
+
 
         meals = []
         ingredients = []
@@ -264,20 +354,13 @@ class MenuPlannerAgent:
 
     def get_meal_limit(self, family_size, budget):
         if family_size <= 1:
-            meal_limit = 1
+            return 1
         elif family_size <= 3:
-            meal_limit = 2
+            return 2
         elif family_size <= 5:
-            meal_limit = 3
+            return 3
         else:
-            meal_limit = 4
-
-        if budget < 30000:
-            meal_limit = min(meal_limit, 1)
-        elif budget < 50000:
-            meal_limit = min(meal_limit, 2)
-
-        return meal_limit
+            return 4
 
     def get_quantity_multiplier(self, family_size):
         if family_size >= 7:
