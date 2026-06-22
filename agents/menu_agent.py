@@ -1,6 +1,7 @@
 from mcp.recipe_mcp import get_recipes
 import random
 
+
 ALLERGY_MAP = {
     "닭고기": ["chicken", "chicken_breast"],
     "치킨": ["chicken", "chicken_breast"],
@@ -11,9 +12,9 @@ ALLERGY_MAP = {
     "milk": ["milk", "cheese", "greek_yogurt", "cream"],
     "dairy": ["milk", "cheese", "greek_yogurt", "cream"],
 
-    "계란": ["egg"],
-    "달걀": ["egg"],
-    "egg": ["egg"],
+    "계란": ["egg", "eggs", "egg_yolk", "egg_yolks"],
+    "달걀": ["egg", "eggs", "egg_yolk", "egg_yolks"],
+    "egg": ["egg", "eggs", "egg_yolk", "egg_yolks"],
 
     "땅콩": ["peanut"],
     "견과류": ["peanut", "almond", "walnut", "cashew"],
@@ -22,13 +23,14 @@ ALLERGY_MAP = {
 
     "새우": ["shrimp", "prawn"],
     "해산물": ["shrimp", "prawn", "salmon", "fish", "tuna"],
-    "seafood": ["shrimp", "prawn", "salmon", "fish", "tuna"]
+    "seafood": ["shrimp", "prawn", "salmon", "fish", "tuna"],
 }
+
 
 PURPOSE_KEYWORDS = {
     "weekly": [
-        "rice", "soup", "stew", "chicken", "beef", "pasta", "curry",
-        "fried", "noodle", "vegetable"
+        "rice", "soup", "stew", "chicken", "beef", "pasta",
+        "curry", "fried", "noodle", "vegetable", "potato", "egg"
     ],
     "diet": [
         "salad", "grilled", "chicken", "salmon", "fish", "soup",
@@ -36,12 +38,12 @@ PURPOSE_KEYWORDS = {
     ],
     "birthday": [
         "cake", "dessert", "sandwich", "party", "fruit", "chocolate",
-        "pasta", "pizza", "cookie", "pie"
+        "pasta", "pizza", "cookie", "pie", "bread"
     ],
     "camping": [
         "bbq", "barbecue", "grill", "grilled", "skewer", "sausage",
-        "pork", "beef", "chicken", "rib", "kebab"
-    ]
+        "pork", "beef", "chicken", "rib", "kebab", "potato"
+    ],
 }
 
 
@@ -61,7 +63,13 @@ class MenuPlannerAgent:
             menu_name = meal.get("menu", "")
             ingredients = meal.get("ingredients", [])
 
-            normalized_ingredients = set(x.lower() for x in ingredients)
+            if not self.is_popular_meal(menu_name, ingredients, purpose):
+                continue
+
+            normalized_ingredients = set(
+                item.lower().replace(" ", "_")
+                for item in ingredients
+            )
 
             if normalized_ingredients & blocked:
                 continue
@@ -71,7 +79,8 @@ class MenuPlannerAgent:
             safe_recipes.append({
                 "menu": menu_name,
                 "ingredients": ingredients,
-                "score": score
+                "score": score,
+                "is_dessert": self.is_dessert_meal(menu_name, ingredients),
             })
 
         if not safe_recipes:
@@ -81,16 +90,40 @@ class MenuPlannerAgent:
                 "excluded_allergy_items": list(blocked),
                 "family_size": family_size,
                 "meal_count": 0,
-                "quantity_multiplier": self.get_quantity_multiplier(family_size)
+                "quantity_multiplier": self.get_quantity_multiplier(family_size),
             }
 
         safe_recipes.sort(key=lambda x: x["score"], reverse=True)
 
-        top_pool = safe_recipes[:max(meal_limit * 3, meal_limit)]
-
+        top_pool = safe_recipes[:max(meal_limit * 4, meal_limit)]
         random.shuffle(top_pool)
 
-        selected = top_pool[:meal_limit]
+        selected = []
+        dessert_count = 0
+
+        for meal in top_pool:
+            if purpose == "birthday" and meal["is_dessert"]:
+                if dessert_count >= 1:
+                    continue
+                dessert_count += 1
+
+            selected.append(meal)
+
+            if len(selected) >= meal_limit:
+                break
+
+        if len(selected) < meal_limit:
+            for meal in safe_recipes:
+                if meal in selected:
+                    continue
+
+                if purpose == "birthday" and meal["is_dessert"] and dessert_count >= 1:
+                    continue
+
+                selected.append(meal)
+
+                if len(selected) >= meal_limit:
+                    break
 
         selected.sort(key=lambda x: x["score"], reverse=True)
 
@@ -107,13 +140,86 @@ class MenuPlannerAgent:
             "excluded_allergy_items": list(blocked),
             "family_size": family_size,
             "meal_count": len(meals),
-            "quantity_multiplier": self.get_quantity_multiplier(family_size)
+            "quantity_multiplier": self.get_quantity_multiplier(family_size),
         }
 
+    def is_popular_meal(self, menu_name, ingredients, purpose):
+        text = (menu_name + " " + " ".join(ingredients)).lower()
+
+        popular_keywords = [
+            "chicken", "beef", "pork", "salmon", "fish",
+            "pasta", "rice", "fried", "soup", "salad",
+            "sandwich", "burger", "pizza", "noodle",
+            "curry", "wrap", "sausage", "potato",
+            "tomato", "egg", "bread", "fruit",
+            "cake", "cookie", "pie", "grilled"
+        ]
+
+        unpopular_keywords = [
+            "ayam", "percik", "laksa", "rendang",
+            "tagine", "koshari", "kedgeree",
+            "massaman", "satay", "sambal",
+            "cevapi", "burek", "moussaka",
+            "shakshuka", "timbits", "goat",
+            "kidney", "liver", "offal"
+        ]
+
+        exotic_ingredients = [
+            "sherry", "cardamom", "cumin",
+            "oregano", "golden_syrup", "dulce",
+            "molasses", "anchovy"
+        ]
+
+        if any(word in text for word in unpopular_keywords):
+            return False
+
+        if any(word in text for word in exotic_ingredients):
+            return False
+
+        if len(ingredients) > 12:
+            return False
+
+        is_dessert = self.is_dessert_meal(menu_name, ingredients)
+
+        if purpose != "birthday" and is_dessert:
+            return False
+
+        if purpose == "birthday" and is_dessert:
+            return True
+
+        if any(word in text for word in popular_keywords):
+            return True
+
+        return False
+
+    def is_dessert_meal(self, menu_name, ingredients):
+        text = (menu_name + " " + " ".join(ingredients)).lower()
+
+        dessert_keywords = [
+            "cake", "cookie", "brownie", "pudding",
+            "pie", "tart", "muffin", "dessert",
+            "chocolate"
+        ]
+
+        baking_keywords = [
+            "flour", "sugar", "butter",
+            "vanilla", "syrup"
+        ]
+
+        dessert_score = 0
+
+        for keyword in dessert_keywords:
+            if keyword in text:
+                dessert_score += 1
+
+        for keyword in baking_keywords:
+            if keyword in text:
+                dessert_score += 1
+
+        return dessert_score >= 3
+
     def score_meal(self, menu_name, ingredients, purpose):
-        text = (
-            menu_name + " " + " ".join(ingredients)
-        ).lower()
+        text = (menu_name + " " + " ".join(ingredients)).lower()
 
         keywords = PURPOSE_KEYWORDS.get(
             purpose,
@@ -127,33 +233,37 @@ class MenuPlannerAgent:
                 score += 2
 
         if purpose == "diet":
-            heavy_words = ["fried", "cake", "chocolate", "cream", "pork"]
+            heavy_words = ["fried", "cake", "chocolate", "cream", "pork", "butter"]
             for word in heavy_words:
                 if word in text:
                     score -= 2
 
         if purpose == "birthday":
+            if self.is_dessert_meal(menu_name, ingredients):
+                score += 2
             if "salad" in text or "soup" in text:
                 score -= 1
 
         if purpose == "camping":
             if "cake" in text or "dessert" in text:
-                score -= 2
+                score -= 3
 
         return score
 
     def get_meal_limit(self, family_size, budget):
-        if family_size >= 7:
-            meal_limit = 5
-        elif family_size >= 4:
-            meal_limit = 4
-        else:
+        if family_size <= 1:
+            meal_limit = 1
+        elif family_size <= 3:
+            meal_limit = 2
+        elif family_size <= 5:
             meal_limit = 3
+        else:
+            meal_limit = 4
 
         if budget < 30000:
-            meal_limit = min(meal_limit, 3)
+            meal_limit = min(meal_limit, 1)
         elif budget < 50000:
-            meal_limit = min(meal_limit, 4)
+            meal_limit = min(meal_limit, 2)
 
         return meal_limit
 

@@ -1,139 +1,378 @@
-<script>
-async function generate() {
-  const btn = document.getElementById("generateBtn");
-  const resultEl = document.getElementById("result");
-  const logEl = document.getElementById("agentLog");
-
-  btn.disabled = true;
-  btn.innerText = "Agent 실행 중...";
-
-  logEl.style.display = "block";
-  logEl.innerHTML = `
-    <div>[Pi] Master Agent initialized</div>
-    <div>[Skill] parse-intent skill loaded</div>
-    <div>[MCP] recipe-mcp ready</div>
-    <div>[MCP] fridge-inventory-mcp ready</div>
-    <div>[MCP] price-comparison-mcp ready</div>
-  `;
-
-  const allergyText = document.getElementById("allergies").value.trim();
-
-  const payload = {
-    family_size: parseInt(document.getElementById("family_size").value),
-    allergies: allergyText ? allergyText.split(",").map(x => x.trim()) : [],
-    purpose: document.getElementById("purpose").value,
-    budget: parseInt(document.getElementById("budget").value)
-  };
-
-  try {
-    const response = await fetch("/generate-shopping-list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      resultEl.className = "";
-      resultEl.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-      return;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartCart AI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f1117;
+      color: #e8eaf0;
     }
 
-    logEl.innerHTML += `
-      <div>[Pi] Context analyzed: family_size=${payload.family_size}</div>
-      <div>[Skill] diet-timeline selected purpose=${payload.purpose}</div>
-      <div>[MCP] inventory filtering completed</div>
-      <div>[MCP] price optimization completed</div>
-      <div>[Pi] Final shopping list generated</div>
-    `;
+    header {
+      padding: 20px 36px;
+      background: #1a1d27;
+      border-bottom: 1px solid #2e3352;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-    const budget = data.budget || payload.budget;
-    const totalCost = data.total_cost || 0;
-    const removedItems = data.removed_items || [];
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+    }
 
-    let html = `
-      <div class="summary">
-        <div class="summary-card">
-          <div class="num">${data.meal_plan.length}</div>
-          <div>추천 메뉴</div>
-        </div>
-        <div class="summary-card">
-          <div class="num">${data.shopping_list.length}</div>
-          <div>구매 품목</div>
-        </div>
-        <div class="summary-card">
-          <div class="num">₩${totalCost.toLocaleString()}</div>
-          <div>예산 ₩${budget.toLocaleString()}</div>
-        </div>
+    .logo span {
+      color: #4ade80;
+    }
+
+    .badge {
+      border: 1px solid #4ade80;
+      color: #4ade80;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: calc(100vh - 73px);
+    }
+
+    .left {
+      background: #1a1d27;
+      padding: 24px;
+      border-right: 1px solid #2e3352;
+    }
+
+    .right {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: #22263a;
+      border: 1px solid #2e3352;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    input, select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px;
+      border-radius: 10px;
+      border: 1px solid #2e3352;
+      background: #0f1117;
+      color: #e8eaf0;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 12px;
+      background: #4ade80;
+      color: #0f1117;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: #22263a;
+      border: 1px solid #2e3352;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .summary-card .num {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4ade80;
+    }
+
+    .section-title {
+      color: #22d3ee;
+      margin-bottom: 12px;
+      font-weight: bold;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #2e3352;
+    }
+
+    .item span:last-child {
+      white-space: nowrap;
+      color: #d1d5db;
+    }
+
+    .log {
+      margin-top: 20px;
+      background: #111827;
+      border: 1px solid #2e3352;
+      border-radius: 14px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .log div {
+      margin-bottom: 8px;
+    }
+
+    .empty {
+      color: #9ca3af;
+      text-align: center;
+      padding: 80px 0;
+    }
+
+    .warning {
+      color: #fbbf24;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">🛒 Smart<span>Cart</span> AI</div>
+    <div class="badge">Pi Agent + Skill + MCP</div>
+  </header>
+
+  <div class="layout">
+    <aside class="left">
+      <div class="card">
+        <div class="section-title">👨‍👩‍👧 가족 구성</div>
+
+        <label>가족 수</label>
+        <input id="family_size" type="number" value="4" min="1">
+
+        <label>알레르기 / 식이 제한</label>
+        <input id="allergies" type="text" placeholder="예: 땅콩, 우유, 새우 / 없으면 비워두세요">
       </div>
 
       <div class="card">
-        <div class="section-title">🍽 추천 메뉴</div>
-    `;
+        <div class="section-title">📅 장보기 목적</div>
 
-    data.meal_plan.forEach(meal => {
-      html += `<div class="item"><span>${meal}</span></div>`;
-    });
+        <label>목적</label>
+        <select id="purpose">
+          <option value="weekly">주간 정기 장보기</option>
+          <option value="diet">다이어트 식단</option>
+          <option value="birthday">아이 생일파티</option>
+          <option value="camping">캠핑 / 여행</option>
+        </select>
 
-    html += `
+        <label>예산</label>
+        <input id="budget" type="number" value="50000">
       </div>
 
-      <div class="card">
-        <div class="section-title">🛒 장보기 목록</div>
-    `;
+      <button id="generateBtn" onclick="generate()">🤖 Generate Shopping List</button>
+    </aside>
 
-    data.shopping_list.forEach(item => {
-      html += `
-        <div class="item">
-          <span>${item.name || item.item}</span>
-          <span>₩${item.price.toLocaleString()}</span>
-        </div>
+    <main class="right">
+      <div id="result" class="empty">
+        아직 결과가 없습니다.<br>
+        왼쪽 정보를 입력하고 Agent를 실행하세요.
+      </div>
+
+      <div class="log" id="agentLog" style="display:none;"></div>
+    </main>
+  </div>
+
+  <script>
+    async function generate() {
+      const btn = document.getElementById("generateBtn");
+      const resultEl = document.getElementById("result");
+      const logEl = document.getElementById("agentLog");
+
+      btn.disabled = true;
+      btn.innerText = "Agent 실행 중...";
+      resultEl.className = "empty";
+      resultEl.innerHTML = "Agent가 장보기 목록을 생성하는 중입니다...";
+
+      logEl.style.display = "block";
+      logEl.innerHTML = `
+        <div>[Pi] Master Agent initialized</div>
+        <div>[Skill] parse-intent skill loaded</div>
+        <div>[MCP] recipe-mcp ready</div>
+        <div>[MCP] fridge-inventory-mcp ready</div>
+        <div>[MCP] price-comparison-mcp ready</div>
       `;
-    });
 
-    html += `</div>`;
+      const allergyText = document.getElementById("allergies").value.trim();
 
-    if (removedItems.length > 0) {
-      html += `
-        <div class="card">
-          <div class="section-title">⚠️ 예산 초과로 제외된 품목</div>
-      `;
+      const payload = {
+        family_size: parseInt(document.getElementById("family_size").value),
+        allergies: allergyText ? allergyText.split(",").map(function(x) { return x.trim(); }) : [],
+        purpose: document.getElementById("purpose").value,
+        budget: parseInt(document.getElementById("budget").value)
+      };
 
-      removedItems.forEach(item => {
-        html += `
-          <div class="item">
-            <span>${item.name || item.item}</span>
-            <span>₩${item.price.toLocaleString()}</span>
-          </div>
+      try {
+        const response = await fetch("/generate-shopping-list", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          resultEl.className = "";
+          resultEl.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+          return;
+        }
+
+        logEl.innerHTML += `
+          <div>[Pi] Context analyzed: family_size=${payload.family_size}</div>
+          <div>[Skill] diet-timeline selected purpose=${payload.purpose}</div>
+          <div>[MCP] inventory filtering completed</div>
+          <div>[MCP] price optimization completed</div>
+          <div>[Pi] Final shopping list generated</div>
         `;
-      });
+
+        renderResult(data, payload);
+
+      } catch (err) {
+        resultEl.className = "";
+        resultEl.innerHTML = "<pre>ERROR: " + err.message + "</pre>";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🔄 다시 생성";
+      }
+    }
+
+    function renderResult(data, payload) {
+      const resultEl = document.getElementById("result");
+
+      const mealPlan = data.meal_plan || [];
+      const shoppingList = data.shopping_list || [];
+      const removedItems = data.removed_items || [];
+      const allergyItems = data.excluded_allergy_items || [];
+
+      const budget = data.budget || payload.budget || 0;
+      const totalCost = data.total_cost || 0;
+
+      let html = `
+        <div class="summary">
+          <div class="summary-card">
+            <div class="num">${mealPlan.length}</div>
+            <div>추천 메뉴</div>
+          </div>
+          <div class="summary-card">
+            <div class="num">${shoppingList.length}</div>
+            <div>구매 품목</div>
+          </div>
+          <div class="summary-card">
+            <div class="num">₩${Number(totalCost).toLocaleString()}</div>
+            <div>예산 ₩${Number(budget).toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">🍽 추천 메뉴</div>
+      `;
+
+      if (mealPlan.length === 0) {
+        html += `<div class="item"><span>추천 메뉴가 없습니다.</span></div>`;
+      } else {
+        mealPlan.forEach(function(meal) {
+          html += `<div class="item"><span>${meal}</span></div>`;
+        });
+      }
+
+      html += `
+        </div>
+
+        <div class="card">
+          <div class="section-title">🛒 장보기 목록</div>
+      `;
+
+      if (shoppingList.length === 0) {
+        html += `<div class="item"><span>예산 또는 필터 조건으로 인해 구매 품목이 없습니다.</span></div>`;
+      } else {
+        shoppingList.forEach(function(item) {
+          html += `
+            <div class="item">
+              <span>${item.name || item.item}</span>
+              <span>₩${Number(item.price || 0).toLocaleString()}</span>
+            </div>
+          `;
+        });
+      }
 
       html += `</div>`;
-    }
 
-    if (data.excluded_allergy_items && data.excluded_allergy_items.length > 0) {
-      html += `
-        <div class="card">
-          <div class="section-title">🚫 알레르기 때문에 제외된 재료</div>
-          <div class="item">
-            <span>${data.excluded_allergy_items.join(", ")}</span>
+      if (removedItems.length > 0) {
+        html += `
+          <div class="card">
+            <div class="section-title warning">⚠️ 예산 초과로 제외된 품목</div>
+        `;
+
+        removedItems.forEach(function(item) {
+          html += `
+            <div class="item">
+              <span>${item.name || item.item}</span>
+              <span>₩${Number(item.price || 0).toLocaleString()}</span>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+      }
+
+      if (allergyItems.length > 0) {
+        html += `
+          <div class="card">
+            <div class="section-title">🚫 알레르기 때문에 제외된 재료</div>
+            <div class="item">
+              <span>${allergyItems.join(", ")}</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
+
+      resultEl.className = "";
+      resultEl.innerHTML = html;
     }
-
-    resultEl.className = "";
-    resultEl.innerHTML = html;
-
-  } catch (err) {
-    resultEl.className = "";
-    resultEl.innerHTML = `<pre>ERROR: ${err.message}</pre>`;
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "🔄 다시 생성";
-  }
-}
-</script>
+  </script>
+</body>
+</html>

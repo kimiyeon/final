@@ -1,302 +1,135 @@
-# Smart Grocery Agent (스마트 장보기 에이전트)
+# Smart Grocery Agent
 
-Pi 기반 Agent Architecture와 MCP(Model Context Protocol)를 활용하여 구현한 AI 장보기 도우미 서비스입니다.
+AI Agent와 MCP(Model Context Protocol)를 활용하여 사용자 상황에 맞는 장보기 목록을 생성하는 스마트 장보기 도우미 서비스입니다.
 
-사용자의 가족 구성, 알레르기 정보, 장보기 목적, 예산을 분석하여 식단과 장보기 목록을 자동 생성합니다.
+## 프로젝트 소개
 
----
+Smart Grocery Agent는 가족 구성, 알레르기, 장보기 목적, 예산 등의 정보를 바탕으로 개인화된 식단과 장보기 목록을 생성하는 멀티 에이전트 기반 서비스입니다.
 
-# 1. 프로젝트 소개
+사용자는 웹 UI를 통해 장보기 조건을 입력할 수 있으며, 여러 Agent가 협력하여 메뉴 추천, 재료 추출, 가격 비교 및 예산 최적화를 수행합니다.
 
-Smart Grocery Agent는 장보기 계획 수립 과정을 자동화하기 위한 AI Agent 기반 웹 서비스입니다.
-
-사용자는 가족 수, 알레르기, 장보기 목적, 예산 등의 정보를 입력할 수 있으며, 시스템은 이를 분석하여 적절한 식단과 장보기 목록을 생성합니다.
-
-또한 외부 레시피 데이터베이스(TheMealDB)를 활용하여 메뉴 정보를 가져오고, MCP 서버를 통해 재료 및 가격 정보를 관리합니다.
-
----
-
-# 2. 문제 정의
+## 문제 정의
 
 일반적인 장보기 과정에서는 다음과 같은 문제가 발생합니다.
 
-* 어떤 식단을 준비해야 할지 결정하기 어렵다.
-* 가족 구성원이나 알레르기를 고려하지 못한다.
-* 예산 관리가 어렵다.
-* 필요한 재료를 일일이 계산해야 한다.
+* 무엇을 구매해야 할지 결정하기 어렵다.
+* 가족 구성원 수에 따라 필요한 식재료 양이 달라진다.
+* 알레르기 식품이 포함될 수 있다.
+* 예산을 초과하는 구매가 발생한다.
+* 이미 보유 중인 재료를 다시 구매하는 경우가 있다.
 
-본 프로젝트는 이러한 문제를 Agent 기반 구조를 통해 해결하는 것을 목표로 한다.
+본 프로젝트는 이러한 문제를 AI Agent와 MCP 도구를 활용하여 해결하는 것을 목표로 한다.
 
----
+## 서비스 대상 사용자
 
-# 3. 서비스 대상
+* 주간 장보기를 하는 가정
+* 다이어트 식단을 관리하는 사용자
+* 알레르기 및 식이 제한이 있는 사용자
+* 예산 기반 장보기를 원하는 사용자
+* 캠핑 및 파티를 준비하는 사용자
 
-다음과 같은 사용자를 대상으로 한다.
+## 핵심 기능
 
-* 주간 장보기를 계획하는 가정
-* 알레르기가 있는 가족 구성원을 둔 사용자
-* 식단 계획이 필요한 사용자
-* 예산 관리를 중요하게 생각하는 사용자
-* 캠핑, 파티 등 특정 목적의 장보기가 필요한 사용자
-
----
-
-# 4. 주요 기능
-
-## 4.1 사용자 정보 분석 (Context Analysis)
-
-사용자 입력을 분석하여 장보기 컨텍스트를 생성한다.
+### 1. 사용자 상황 분석
 
 입력 정보
 
 * 가족 수
-* 알레르기
+* 알레르기 정보
 * 장보기 목적
 * 예산
 
-예시
+분석 결과를 Agent가 활용하여 맞춤형 장보기 계획을 생성한다.
 
-```json
-{
-  "family_size": 4,
-  "allergies": ["milk"],
-  "purpose": "weekly",
-  "budget": 50000
-}
-```
+### 2. 메뉴 추천
 
----
+외부 레시피 데이터를 활용하여 메뉴 후보를 수집한다.
 
-## 4.2 식단 추천 (Menu Planning)
+다음 요소를 고려하여 메뉴를 추천한다.
 
-장보기 목적에 따라 메뉴를 추천한다.
-
-예시
-
-* 주간 장보기
-* 다이어트
-* 생일 파티
-* 캠핑
-
-레시피 정보는 TheMealDB API 및 로컬 레시피 데이터를 활용한다.
-
----
-
-## 4.3 알레르기 필터링
-
-사용자가 입력한 알레르기 정보를 기반으로 위험한 재료가 포함된 메뉴를 제외한다.
-
-예시
-
-입력
-
-```text
-알레르기: 닭고기
-```
-
-결과
-
-```text
-Chicken Salad 제외
-Grilled Chicken 제외
-```
-
----
-
-## 4.4 장보기 목록 생성
-
-추천된 메뉴에 필요한 재료를 분석하여 장보기 목록을 생성한다.
-
-예시
-
-```text
-양파
-계란
-상추
-돼지고기
-김치
-```
-
----
-
-## 4.5 가격 계산
-
-재료 가격 데이터를 이용하여 예상 구매 금액을 계산한다.
-
-출력 예시
-
-```text
-총 예상 금액: ₩43,500
-```
-
----
-
-# 5. 시스템 구조
-
-```text
-사용자
- ↓
-Web UI
- ↓
-FastAPI Backend
- ↓
-Master Agent
- ├── Context Agent
- │     └── parse-intent Skill
- │
- ├── Menu Planner Agent
- │     └── recipe-mcp
- │
- ├── Inventory Filter Agent
- │     └── fridge-inventory-mcp
- │
- └── Price Optimizer Agent
-       └── price-comparison-mcp
- ↓
-Shopping Plan
-```
-
----
-
-# 6. Pi 활용 내용
-
-본 프로젝트는 Pi Agent Architecture의 개념을 기반으로 구현되었다.
-
-## Skill
-
-### parse-intent
-
-사용자 입력을 구조화된 컨텍스트 정보로 변환한다.
-
-분석 항목
-
+* 장보기 목적
+* 알레르기
 * 가족 수
-* 알레르기
-* 장보기 목적
-* 예산
+* 대중성 필터
 
-출력 예시
+예시
 
-```json
-{
-  "family_size": 4,
-  "allergies": [],
-  "purpose": "weekly",
-  "budget": 50000
-}
-```
+* Chicken Pasta
+* Grilled Chicken
+* Vegetable Soup
+* Beef Rice Bowl
 
----
+### 3. 알레르기 필터링
 
-## MCP
+사용자가 입력한 알레르기 정보를 기반으로 위험 재료를 자동 제거한다.
 
-### recipe-mcp
+예시
 
-레시피 정보를 제공한다.
+* 계란
+* 우유
+* 닭고기
+* 땅콩
+* 새우
 
-데이터 출처
+### 4. 가격 비교 및 예산 최적화
 
-* TheMealDB API
-* 로컬 레시피 데이터
+Price MCP가 식재료 가격을 추정하고 매장별 가격을 비교한다.
 
----
+지원 매장
 
-### fridge-inventory-mcp
+* Coupang
+* Emart
+* Homeplus
 
-냉장고 재고 정보를 관리한다.
+예산을 초과하는 경우 우선순위가 낮은 품목을 제외하여 최종 장보기 목록을 생성한다.
 
-기능
+### 5. 가족 규모 기반 수량 조정
 
-* 보유 재료 조회
-* 중복 구매 방지
+가족 수에 따라 구매 수량을 자동 조정한다.
 
----
+예시
 
-### price-comparison-mcp
+* 1인 가구 → 1배
+* 3~4인 → 1.5배
+* 5~6인 → 2배
+* 7인 이상 → 2.5배
 
-재료 가격 정보를 제공한다.
+## 시스템 구조
 
-기능
+Web UI
 
-* 가격 조회
-* 예상 구매 비용 계산
+↓
 
----
+FastAPI Backend
 
-## Agent
+↓
 
-### Context Agent
+Master Agent
 
-사용자 정보를 분석한다.
+├── Menu Planner Agent
 
-### Menu Planner Agent
+├── Inventory Agent
 
-메뉴를 추천한다.
+└── Price Optimizer Agent
 
-### Inventory Filter Agent
+↓
 
-재고 정보를 기반으로 구매 목록을 정리한다.
+MCP Servers
 
-### Price Optimizer Agent
+├── Recipe MCP
 
-예산과 가격 정보를 계산한다.
+└── Price MCP
 
----
+## 실행 방법
 
-# 7. 기술 스택
-
-## Backend
-
-* Python
-* FastAPI
-
-## Frontend
-
-* HTML
-* CSS
-* JavaScript
-
-## Agent Architecture
-
-* Pi Skill
-* MCP
-* Multi-Agent Architecture
-
-## External Data
-
-* TheMealDB API
-
----
-
-# 8. 실행 방법
-
-저장소 클론
-
-```bash
-git clone https://github.com/kimiyeon/Smart-Grocery-Agent.git
-
-cd Smart-Grocery-Agent
-```
-
-가상환경 생성
-
-```bash
-python3 -m venv venv
-
-source venv/bin/activate
-```
-
-패키지 설치
+### Backend
 
 ```bash
 pip install -r requirements.txt
-```
-
-서버 실행
-
-```bash
 uvicorn app:app --reload
 ```
+
+### Frontend
 
 브라우저 접속
 
@@ -304,20 +137,26 @@ uvicorn app:app --reload
 http://127.0.0.1:8000
 ```
 
----
+## 사용 기술
 
-# 9. 향후 개선 사항
+* Python
+* FastAPI
+* MCP
+* HTML/CSS/JavaScript
+* TheMealDB API
 
-* 실제 마트 API 연동
-* 실시간 가격 비교
-* 영양 성분 분석
-* OCR 기반 영수증 분석
-* AI 기반 개인 맞춤 식단 추천
+## 향후 개선 방향
 
----
+* 실제 커머스 API 연동
+* 실시간 가격 비교 기능
+* LLM 기반 메뉴 추천
+* OCR 영수증 분석
+* 냉장고 재고 관리 MCP 연동
 
-# 10. 프로젝트 정보
+## 프로젝트 특징
 
-오픈소스소프트웨어 기말 프로젝트
+본 프로젝트는 Agent와 MCP를 분리하여 구현하였다.
 
-Smart Grocery Agent
+Agent는 의사결정을 담당하며 MCP는 외부 데이터 접근 및 가격 비교 기능을 담당한다.
+
+이를 통해 향후 실제 커머스 API나 외부 데이터 소스로 쉽게 확장할 수 있다.
