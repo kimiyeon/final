@@ -1,11 +1,34 @@
+
+---
+
+## `.pi/skills/fridge-dedup/SKILL.md`
+
+```md
 ---
 name: fridge-dedup
-description: Remove duplicate ingredients using fridge inventory.
+description: 냉장고 보유 재료와 장보기 재료를 비교하여 중복 구매를 줄이는 Skill
 ---
 
 # Fridge Dedup Skill
 
-## Responsibilities
-- Check fridge inventory
-- Remove duplicate ingredients
-- Prioritize expiring items
+## 목적
+
+이미 보유한 재료를 장보기 목록에서 제거하여 중복 구매를 방지한다.
+
+## 입력 정보
+
+- 추천 식단에 필요한 재료 목록
+- 냉장고 보유 재료 목록
+
+## 처리 규칙
+
+- 냉장고에 이미 존재하는 재료는 장보기 목록에서 제외한다.
+- 동일한 재료가 여러 메뉴에 사용될 경우 한 번만 표시한다.
+- 재료 이름은 소문자 기준으로 비교한다.
+
+## 예시
+
+냉장고 보유 재료:
+
+```json
+["egg", "milk", "tomato"]

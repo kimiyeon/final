@@ -1,255 +1,323 @@
 # Smart Grocery Agent (스마트 장보기 에이전트)
 
-Pi 기반 멀티 에이전트 구조를 활용한 AI 장보기 도우미 서비스입니다.
+Pi 기반 Agent Architecture와 MCP(Model Context Protocol)를 활용하여 구현한 AI 장보기 도우미 서비스입니다.
+
+사용자의 가족 구성, 알레르기 정보, 장보기 목적, 예산을 분석하여 식단과 장보기 목록을 자동 생성합니다.
 
 ---
 
 # 1. 프로젝트 소개
 
-Smart Grocery Agent는 사용자의 장보기 상황을 분석하여 자동으로 장보기 목록을 생성해주는 AI Agent 웹 서비스입니다.
+Smart Grocery Agent는 장보기 계획 수립 과정을 자동화하기 위한 AI Agent 기반 웹 서비스입니다.
 
-다음 정보를 기반으로 개인화된 장보기 리스트를 생성합니다.
+사용자는 가족 수, 알레르기, 장보기 목적, 예산 등의 정보를 입력할 수 있으며, 시스템은 이를 분석하여 적절한 식단과 장보기 목록을 생성합니다.
 
-- 가족 구성
-- 알레르기 및 기저 질환
-- 장보기 목적
-- 예산
-- 냉장고 재고
-- 기존 영수증 구매 내역
-
-AI 에이전트들이 역할을 분담하여 상황 분석, 식단 생성, 중복 제거, 가격 비교를 수행합니다.
+또한 외부 레시피 데이터베이스(TheMealDB)를 활용하여 메뉴 정보를 가져오고, MCP 서버를 통해 재료 및 가격 정보를 관리합니다.
 
 ---
 
 # 2. 문제 정의
 
-기존 장보기에는 다음과 같은 문제가 있습니다.
+일반적인 장보기 과정에서는 다음과 같은 문제가 발생합니다.
 
-- 냉장고에 이미 있는 재료를 다시 구매함
-- 가족의 건강 조건이 반영되지 않음
-- 예산 초과
-- 행사/목적에 맞는 식단 구성의 어려움
+* 어떤 식단을 준비해야 할지 결정하기 어렵다.
+* 가족 구성원이나 알레르기를 고려하지 못한다.
+* 예산 관리가 어렵다.
+* 필요한 재료를 일일이 계산해야 한다.
 
-본 프로젝트는 이러한 문제를 AI Agent와 외부 도구(MCP)를 활용해 해결합니다.
-
----
-
-# 3. 서비스 대상 사용자
-
-다음과 같은 사용자를 대상으로 합니다.
-
-- 주간 장보기를 하는 가정
-- 아이 식단을 관리하는 부모
-- 알레르기가 있는 가족
-- 예산 관리가 필요한 사용자
-- 캠핑 / 여행 / 파티 준비 사용자
+본 프로젝트는 이러한 문제를 Agent 기반 구조를 통해 해결하는 것을 목표로 한다.
 
 ---
 
-# 4. 핵심 기능
+# 3. 서비스 대상
 
-## 4.1 Context Analysis
+다음과 같은 사용자를 대상으로 한다.
 
-사용자 입력에서 다음 정보를 추출합니다.
-
-- 가족 수
-- 알레르기
-- 쇼핑 목적
-- 예산
-
----
-
-## 4.2 Menu Planning
-
-사용자 상황에 맞는 식단을 생성합니다.
-
-예시:
-
-- Chicken Salad
-- Pasta
-- Soup
+* 주간 장보기를 계획하는 가정
+* 알레르기가 있는 가족 구성원을 둔 사용자
+* 식단 계획이 필요한 사용자
+* 예산 관리를 중요하게 생각하는 사용자
+* 캠핑, 파티 등 특정 목적의 장보기가 필요한 사용자
 
 ---
 
-## 4.3 Inventory Filtering
+# 4. 주요 기능
 
-냉장고 재고 MCP 서버와 연동하여 이미 보유한 재료를 제거합니다.
+## 4.1 사용자 정보 분석 (Context Analysis)
 
-예시:
+사용자 입력을 분석하여 장보기 컨텍스트를 생성한다.
 
-냉장고 보유 재료:
+입력 정보
 
-- egg
-- milk
-- tomato
+* 가족 수
+* 알레르기
+* 장보기 목적
+* 예산
 
-→ 장보기 목록에서 제외
+예시
 
----
-
-## 4.4 Price Optimization
-
-마트별 가격을 비교하여 최적 가격을 선택합니다.
-
-비교 대상:
-
-- Coupang
-- Emart
-- Homeplus
+```json
+{
+  "family_size": 4,
+  "allergies": ["milk"],
+  "purpose": "weekly",
+  "budget": 50000
+}
+```
 
 ---
 
-## 4.5 Receipt Analysis Extension
+## 4.2 식단 추천 (Menu Planning)
 
-기존 영수증을 분석하여 최근 구매 품목을 파악합니다.
+장보기 목적에 따라 메뉴를 추천한다.
 
-중복 구매 방지에 활용됩니다.
+예시
+
+* 주간 장보기
+* 다이어트
+* 생일 파티
+* 캠핑
+
+레시피 정보는 TheMealDB API 및 로컬 레시피 데이터를 활용한다.
+
+---
+
+## 4.3 알레르기 필터링
+
+사용자가 입력한 알레르기 정보를 기반으로 위험한 재료가 포함된 메뉴를 제외한다.
+
+예시
+
+입력
+
+```text
+알레르기: 닭고기
+```
+
+결과
+
+```text
+Chicken Salad 제외
+Grilled Chicken 제외
+```
+
+---
+
+## 4.4 장보기 목록 생성
+
+추천된 메뉴에 필요한 재료를 분석하여 장보기 목록을 생성한다.
+
+예시
+
+```text
+양파
+계란
+상추
+돼지고기
+김치
+```
+
+---
+
+## 4.5 가격 계산
+
+재료 가격 데이터를 이용하여 예상 구매 금액을 계산한다.
+
+출력 예시
+
+```text
+총 예상 금액: ₩43,500
+```
 
 ---
 
 # 5. 시스템 구조
 
 ```text
+사용자
+ ↓
 Web UI
-   ↓
+ ↓
 FastAPI Backend
-   ↓
-Pi Runtime (Multi-Agent Architecture)
-   ├── Context Analyzer Agent
-   ├── Menu Planner Agent
-   ├── Inventory Filter Agent
-   └── Price Optimizer Agent
-          ↓
-      MCP Servers
-      ├── fridge-inventory-mcp
-      └── price-comparison-mcp
-
-Extensions
-└── receipt-ocr-extension# Smart Grocery Agent (스마트 장보기 에이전트)
-
-Pi 기반 멀티 에이전트 구조를 활용한 AI 장보기 도우미 서비스입니다.
-
----
-
-# 1. 프로젝트 소개
-
-Smart Grocery Agent는 사용자의 장보기 상황을 분석하여 자동으로 장보기 목록을 생성해주는 AI Agent 웹 서비스입니다.
-
-다음 정보를 기반으로 개인화된 장보기 리스트를 생성합니다.
-
-- 가족 구성
-- 알레르기 및 기저 질환
-- 장보기 목적
-- 예산
-- 냉장고 재고
-- 기존 영수증 구매 내역
-
-AI 에이전트들이 역할을 분담하여 상황 분석, 식단 생성, 중복 제거, 가격 비교를 수행합니다.
+ ↓
+Master Agent
+ ├── Context Agent
+ │     └── parse-intent Skill
+ │
+ ├── Menu Planner Agent
+ │     └── recipe-mcp
+ │
+ ├── Inventory Filter Agent
+ │     └── fridge-inventory-mcp
+ │
+ └── Price Optimizer Agent
+       └── price-comparison-mcp
+ ↓
+Shopping Plan
+```
 
 ---
 
-# 2. 문제 정의
+# 6. Pi 활용 내용
 
-기존 장보기에는 다음과 같은 문제가 있습니다.
+본 프로젝트는 Pi Agent Architecture의 개념을 기반으로 구현되었다.
 
-- 냉장고에 이미 있는 재료를 다시 구매함
-- 가족의 건강 조건이 반영되지 않음
-- 예산 초과
-- 행사/목적에 맞는 식단 구성의 어려움
+## Skill
 
-본 프로젝트는 이러한 문제를 AI Agent와 외부 도구(MCP)를 활용해 해결합니다.
+### parse-intent
 
----
+사용자 입력을 구조화된 컨텍스트 정보로 변환한다.
 
-# 3. 서비스 대상 사용자
+분석 항목
 
-다음과 같은 사용자를 대상으로 합니다.
+* 가족 수
+* 알레르기
+* 장보기 목적
+* 예산
 
-- 주간 장보기를 하는 가정
-- 아이 식단을 관리하는 부모
-- 알레르기가 있는 가족
-- 예산 관리가 필요한 사용자
-- 캠핑 / 여행 / 파티 준비 사용자
+출력 예시
 
----
-
-# 4. 핵심 기능
-
-## 4.1 Context Analysis
-
-사용자 입력에서 다음 정보를 추출합니다.
-
-- 가족 수
-- 알레르기
-- 쇼핑 목적
-- 예산
+```json
+{
+  "family_size": 4,
+  "allergies": [],
+  "purpose": "weekly",
+  "budget": 50000
+}
+```
 
 ---
 
-## 4.2 Menu Planning
+## MCP
 
-사용자 상황에 맞는 식단을 생성합니다.
+### recipe-mcp
 
-예시:
+레시피 정보를 제공한다.
 
-- Chicken Salad
-- Pasta
-- Soup
+데이터 출처
 
----
-
-## 4.3 Inventory Filtering
-
-냉장고 재고 MCP 서버와 연동하여 이미 보유한 재료를 제거합니다.
-
-예시:
-
-냉장고 보유 재료:
-
-- egg
-- milk
-- tomato
-
-→ 장보기 목록에서 제외
+* TheMealDB API
+* 로컬 레시피 데이터
 
 ---
 
-## 4.4 Price Optimization
+### fridge-inventory-mcp
 
-마트별 가격을 비교하여 최적 가격을 선택합니다.
+냉장고 재고 정보를 관리한다.
 
-비교 대상:
+기능
 
-- Coupang
-- Emart
-- Homeplus
-
----
-
-## 4.5 Receipt Analysis Extension
-
-기존 영수증을 분석하여 최근 구매 품목을 파악합니다.
-
-중복 구매 방지에 활용됩니다.
+* 보유 재료 조회
+* 중복 구매 방지
 
 ---
 
-# 5. 시스템 구조
+### price-comparison-mcp
 
+재료 가격 정보를 제공한다.
 
-Web UI
-   ↓
-FastAPI Backend
-   ↓
-Pi Runtime (Multi-Agent Architecture)
-   ├── Context Analyzer Agent
-   ├── Menu Planner Agent
-   ├── Inventory Filter Agent
-   └── Price Optimizer Agent
-          ↓
-      MCP Servers
-      ├── fridge-inventory-mcp
-      └── price-comparison-mcp
+기능
 
-Extensions
-└── receipt-ocr-extension
+* 가격 조회
+* 예상 구매 비용 계산
+
+---
+
+## Agent
+
+### Context Agent
+
+사용자 정보를 분석한다.
+
+### Menu Planner Agent
+
+메뉴를 추천한다.
+
+### Inventory Filter Agent
+
+재고 정보를 기반으로 구매 목록을 정리한다.
+
+### Price Optimizer Agent
+
+예산과 가격 정보를 계산한다.
+
+---
+
+# 7. 기술 스택
+
+## Backend
+
+* Python
+* FastAPI
+
+## Frontend
+
+* HTML
+* CSS
+* JavaScript
+
+## Agent Architecture
+
+* Pi Skill
+* MCP
+* Multi-Agent Architecture
+
+## External Data
+
+* TheMealDB API
+
+---
+
+# 8. 실행 방법
+
+저장소 클론
+
+```bash
+git clone https://github.com/kimiyeon/Smart-Grocery-Agent.git
+
+cd Smart-Grocery-Agent
+```
+
+가상환경 생성
+
+```bash
+python3 -m venv venv
+
+source venv/bin/activate
+```
+
+패키지 설치
+
+```bash
+pip install -r requirements.txt
+```
+
+서버 실행
+
+```bash
+uvicorn app:app --reload
+```
+
+브라우저 접속
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+# 9. 향후 개선 사항
+
+* 실제 마트 API 연동
+* 실시간 가격 비교
+* 영양 성분 분석
+* OCR 기반 영수증 분석
+* AI 기반 개인 맞춤 식단 추천
+
+---
+
+# 10. 프로젝트 정보
+
+오픈소스소프트웨어 기말 프로젝트
+
+Smart Grocery Agent
