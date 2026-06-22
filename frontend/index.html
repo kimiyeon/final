@@ -1,204 +1,3 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <title>SmartCart AI</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f1117;
-      color: #e8eaf0;
-    }
-
-    header {
-      padding: 20px 36px;
-      background: #1a1d27;
-      border-bottom: 1px solid #2e3352;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    .logo span {
-      color: #4ade80;
-    }
-
-    .badge {
-      border: 1px solid #4ade80;
-      color: #4ade80;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      height: calc(100vh - 73px);
-    }
-
-    .left {
-      background: #1a1d27;
-      padding: 24px;
-      border-right: 1px solid #2e3352;
-    }
-
-    .right {
-      padding: 24px;
-      overflow-y: auto;
-    }
-
-    .card {
-      background: #22263a;
-      border: 1px solid #2e3352;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      margin-top: 12px;
-      margin-bottom: 6px;
-      font-size: 13px;
-      color: #9ca3af;
-    }
-
-    input, select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 11px;
-      border-radius: 10px;
-      border: 1px solid #2e3352;
-      background: #0f1117;
-      color: #e8eaf0;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 12px;
-      background: #4ade80;
-      color: #0f1117;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .summary-card {
-      background: #22263a;
-      border: 1px solid #2e3352;
-      border-radius: 14px;
-      padding: 16px;
-      text-align: center;
-    }
-
-    .summary-card .num {
-      font-size: 24px;
-      font-weight: bold;
-      color: #4ade80;
-    }
-
-    .section-title {
-      color: #22d3ee;
-      margin-bottom: 12px;
-      font-weight: bold;
-    }
-
-    .item {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid #2e3352;
-    }
-
-    .log {
-      margin-top: 20px;
-      background: #111827;
-      border: 1px solid #2e3352;
-      border-radius: 14px;
-      padding: 16px;
-      font-family: monospace;
-      font-size: 13px;
-      color: #cbd5e1;
-    }
-
-    .log div {
-      margin-bottom: 8px;
-    }
-
-    .empty {
-      color: #9ca3af;
-      text-align: center;
-      padding: 80px 0;
-    }
-  </style>
-</head>
-<body>
-<header>
-  <div class="logo">🛒 Smart<span>Cart</span> AI</div>
-  <div class="badge">Pi Agent + Skill + MCP</div>
-</header>
-
-<div class="layout">
-  <aside class="left">
-    <div class="card">
-      <div class="section-title">👨‍👩‍👧 가족 구성</div>
-
-      <label>가족 수</label>
-      <input id="family_size" type="number" value="4" min="1" />
-
-      <label>알레르기 / 식이 제한</label>
-<input id="allergies" type="text" placeholder="예: 땅콩, 우유, 새우 / 없으면 비워두세요" />
-    </div>
-
-    <div class="card">
-      <div class="section-title">📅 장보기 목적</div>
-
-      <label>목적</label>
-<select id="purpose">
-  <option value="weekly">주간 정기 장보기</option>
-  <option value="diet">다이어트 식단</option>
-  <option value="birthday">아이 생일파티</option>
-  <option value="camping">캠핑 / 여행</option>
-</select>
-
-      <label>예산</label>
-      <input id="budget" type="number" value="50000" />
-    </div>
-
-    <button id="generateBtn" onclick="generate()">🤖 Generate Shopping List</button>
-  </aside>
-
-  <main class="right">
-    <div id="result" class="empty">
-      아직 결과가 없습니다.<br />
-      왼쪽 정보를 입력하고 Agent를 실행하세요.
-    </div>
-
-    <div class="log" id="agentLog" style="display:none;"></div>
-  </main>
-</div>
-
 <script>
 async function generate() {
   const btn = document.getElementById("generateBtn");
@@ -212,6 +11,7 @@ async function generate() {
   logEl.innerHTML = `
     <div>[Pi] Master Agent initialized</div>
     <div>[Skill] parse-intent skill loaded</div>
+    <div>[MCP] recipe-mcp ready</div>
     <div>[MCP] fridge-inventory-mcp ready</div>
     <div>[MCP] price-comparison-mcp ready</div>
   `;
@@ -237,17 +37,22 @@ async function generate() {
     const data = await response.json();
 
     if (!response.ok) {
+      resultEl.className = "";
       resultEl.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
       return;
     }
 
     logEl.innerHTML += `
       <div>[Pi] Context analyzed: family_size=${payload.family_size}</div>
-      <div>[Skill] diet-timeline skill selected purpose=${payload.purpose}</div>
+      <div>[Skill] diet-timeline selected purpose=${payload.purpose}</div>
       <div>[MCP] inventory filtering completed</div>
-      <div>[Extension] receipt-ocr-extension checked</div>
+      <div>[MCP] price optimization completed</div>
       <div>[Pi] Final shopping list generated</div>
     `;
+
+    const budget = data.budget || payload.budget;
+    const totalCost = data.total_cost || 0;
+    const removedItems = data.removed_items || [];
 
     let html = `
       <div class="summary">
@@ -257,16 +62,16 @@ async function generate() {
         </div>
         <div class="summary-card">
           <div class="num">${data.shopping_list.length}</div>
-          <div>장보기 품목</div>
+          <div>구매 품목</div>
         </div>
         <div class="summary-card">
-          <div class="num">₩${data.total_cost.toLocaleString()}</div>
-          <div>예상 비용</div>
+          <div class="num">₩${totalCost.toLocaleString()}</div>
+          <div>예산 ₩${budget.toLocaleString()}</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title">🍽 추천 식단</div>
+        <div class="section-title">🍽 추천 메뉴</div>
     `;
 
     data.meal_plan.forEach(meal => {
@@ -275,15 +80,15 @@ async function generate() {
 
     html += `
       </div>
+
       <div class="card">
-        <div class="section-title">🛍 장보기 목록</div>
+        <div class="section-title">🛒 장보기 목록</div>
     `;
 
     data.shopping_list.forEach(item => {
-      const itemName = item.item || item.name;
       html += `
         <div class="item">
-          <span>${itemName}</span>
+          <span>${item.name || item.item}</span>
           <span>₩${item.price.toLocaleString()}</span>
         </div>
       `;
@@ -291,10 +96,40 @@ async function generate() {
 
     html += `</div>`;
 
+    if (removedItems.length > 0) {
+      html += `
+        <div class="card">
+          <div class="section-title">⚠️ 예산 초과로 제외된 품목</div>
+      `;
+
+      removedItems.forEach(item => {
+        html += `
+          <div class="item">
+            <span>${item.name || item.item}</span>
+            <span>₩${item.price.toLocaleString()}</span>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+    }
+
+    if (data.excluded_allergy_items && data.excluded_allergy_items.length > 0) {
+      html += `
+        <div class="card">
+          <div class="section-title">🚫 알레르기 때문에 제외된 재료</div>
+          <div class="item">
+            <span>${data.excluded_allergy_items.join(", ")}</span>
+          </div>
+        </div>
+      `;
+    }
+
     resultEl.className = "";
     resultEl.innerHTML = html;
 
   } catch (err) {
+    resultEl.className = "";
     resultEl.innerHTML = `<pre>ERROR: ${err.message}</pre>`;
   } finally {
     btn.disabled = false;
@@ -302,5 +137,3 @@ async function generate() {
   }
 }
 </script>
-</body>
-</html>

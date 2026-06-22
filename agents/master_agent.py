@@ -13,9 +13,16 @@ class MasterAgent:
 
     def run(self, user_input):
         context = self.context_agent.analyze(user_input)
+
         menu = self.menu_agent.plan(context)
-        filtered = self.inventory_agent.filter(menu["ingredients"])
-        result = self.price_agent.optimize(filtered, context["budget"])
+
+        filtered_items = self.inventory_agent.filter(menu["ingredients"])
+
+        result = self.price_agent.optimize(
+            filtered_items,
+            budget=context["budget"],
+            quantity_multiplier=menu.get("quantity_multiplier", 1.0)
+        )
 
         return {
             "context": context,
@@ -23,5 +30,11 @@ class MasterAgent:
             "shopping_list": result["cart"],
             "total_cost": result["total"],
             "budget": context["budget"],
-            "excluded_allergy_items": menu.get("excluded_allergy_items", [])
+            "removed_items": result.get("removed_items", []),
+            "budget": context["budget"],
+            "excluded_allergy_items": menu.get("excluded_allergy_items", []),
+            "family_size": menu.get("family_size"),
+            "meal_count": menu.get("meal_count"),
+            "quantity_multiplier": menu.get("quantity_multiplier")
         }
+    
